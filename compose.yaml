@@ -1,0 +1,71 @@
+services:
+  reverse-proxy:
+    build:
+      context: ./containers/reverse-proxy
+      dockerfile: dockerfile
+    env_file:
+      - ./containers/reverse-proxy/env_file
+    environment:
+      DYNAMIC_UPSTREAM: true
+      RESOLVER: "127.0.0.11 valid=30s"
+      DOMAINS: >-
+        wordpress1.example.com -> http://wordpress1_web, wordpress2.example.com -> http://wordpress2_web
+      STAGE: local
+    volumes:
+      - reverse-proxy_data:/var/lib/https-portal
+      - reverse-proxy_logs:/var/log/nginx
+    networks:
+      wordpress-local-network:
+        aliases:
+          - wordpress-local_reverse-proxy
+    ports:
+      - 80:80
+      - 443:443
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+  rdb-browser:
+    build:
+      context: ./containers/rdb-browser
+      dockerfile: dockerfile
+    env_file:
+      - ./containers/rdb-browser/env_file
+    environment:
+      PMA_HOSTS: >-
+        wordpress1_rdb, wordpress2_rdb
+      UPLOAD_LIMIT: 64M
+    networks:
+      wordpress-local-network:
+    ports:
+      - 8080:80
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+  fake-smtp:
+    build:
+      context: ./containers/fake-smtp
+      dockerfile: dockerfile
+    env_file:
+      - ./containers/fake-smtp/env_file
+    environment:
+      MP_DATA_FILE: /data/mailpit.db
+    volumes:
+      - fake-smtp_data:/data
+    networks:
+      wordpress-local-network:
+        aliases:
+          - wordpress-local_fake-smtp
+    ports:
+      - 8025:8025
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+networks:
+  wordpress-local-network:
+    name: wordpress-local-network
+    external: true
+
+volumes:
+  reverse-proxy_data:
+  reverse-proxy_logs:
+  fake-smtp_data:

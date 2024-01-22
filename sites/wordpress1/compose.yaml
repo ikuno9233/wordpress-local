@@ -1,0 +1,60 @@
+services:
+  web:
+    build:
+      context: ./containers/web
+      dockerfile: dockerfile
+    env_file:
+      - ./containers/web/env_file
+    environment:
+      UID: ${UID}
+      GID: ${GID}
+      COMPOSER_ALLOW_SUPERUSER: 1
+    volumes:
+      - ./src:/var/www/html
+    networks:
+      wordpress-local-network:
+        aliases:
+          - wordpress1_web
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    depends_on:
+      rdb:
+        condition: service_healthy
+
+  rdb:
+    build:
+      context: ./containers/rdb
+      dockerfile: dockerfile
+    env_file:
+      - ./containers/rdb/env_file
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wordpress1
+    networks:
+      wordpress-local-network:
+        aliases:
+          - wordpress1_rdb
+    volumes:
+      - rdb_data:/var/lib/mysql
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "--host=localhost",
+          "--user=root",
+          "--password=root"
+        ]
+      timeout: 10s
+      retries: 10
+
+networks:
+  wordpress-local-network:
+    name: wordpress-local-network
+    external: true
+
+volumes:
+  rdb_data:
