@@ -1,4 +1,4 @@
-SHELL=/usr/bin/env bash
+SHELL=/bin/bash
 
 .PHONY: build
 build:

@@ -14,7 +14,7 @@ services:
     networks:
       wordpress-local-network:
         aliases:
-          - wordpress2_web
+          - ${COMPOSE_PROJECT_NAME}_web
     extra_hosts:
       - host.docker.internal:host-gateway
     depends_on:
@@ -29,11 +29,11 @@ services:
       - ./containers/rdb/env_file
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: wordpress2
+      MYSQL_DATABASE: ${COMPOSE_PROJECT_NAME}
     networks:
       wordpress-local-network:
         aliases:
-          - wordpress2_rdb
+          - ${COMPOSE_PROJECT_NAME}_rdb
     volumes:
       - rdb_data:/var/lib/mysql
     extra_hosts:
@@ -48,7 +48,7 @@ services:
           "--user=root",
           "--password=root"
         ]
-      timeout: 10s
+      interval: 1s
       retries: 10
 
 networks:

@@ -8,9 +8,14 @@ services:
     environment:
       DYNAMIC_UPSTREAM: true
       RESOLVER: "127.0.0.11 valid=30s"
-      DOMAINS: >-
-        wordpress1.example.com -> http://wordpress1_web, wordpress2.example.com -> http://wordpress2_web
       STAGE: local
+      DOMAINS: >-
+        ${BASIC_USER}:${BASIC_PASS}@rdb-browser.${APP_DOMAIN}    -> http://rdb-browser,
+        ${BASIC_USER}:${BASIC_PASS}@fake-smtp.${APP_DOMAIN}      -> http://fake-smtp:8025,
+        ${BASIC_USER}:${BASIC_PASS}@wordpress1.${APP_DOMAIN}     -> http://wordpress1_web,
+        ${BASIC_USER}:${BASIC_PASS}@wordpress2.${APP_DOMAIN}     -> http://wordpress2_web,
+        ${BASIC_USER}:${BASIC_PASS}@wordpress3.${APP_DOMAIN}     -> http://wordpress3_web,
+        ${BASIC_USER}:${BASIC_PASS}@sub.wordpress3.${APP_DOMAIN} -> http://wordpress3_web,
     volumes:
       - reverse-proxy_data:/var/lib/https-portal
       - reverse-proxy_logs:/var/log/nginx
@@ -18,6 +23,12 @@ services:
       wordpress-local-network:
         aliases:
           - wordpress-local_reverse-proxy
+          - rdb-browser.${APP_DOMAIN}
+          - fake-smtp.${APP_DOMAIN}
+          - wordpress1.${APP_DOMAIN}
+          - wordpress2.${APP_DOMAIN}
+          - wordpress3.${APP_DOMAIN}
+          - sub.wordpress3.${APP_DOMAIN}
     ports:
       - 80:80
       - 443:443
@@ -31,13 +42,15 @@ services:
     env_file:
       - ./containers/rdb-browser/env_file
     environment:
+      UPLOAD_LIMIT: 128M
       PMA_HOSTS: >-
-        wordpress1_rdb, wordpress2_rdb
-      UPLOAD_LIMIT: 64M
+        wordpress1_rdb,
+        wordpress2_rdb,
+        wordpress3_rdb,
     networks:
       wordpress-local-network:
-    ports:
-      - 8080:80
+        aliases:
+          - wordpress-local_rdb-browser
     extra_hosts:
       - host.docker.internal:host-gateway
 
@@ -55,8 +68,6 @@ services:
       wordpress-local-network:
         aliases:
           - wordpress-local_fake-smtp
-    ports:
-      - 8025:8025
     extra_hosts:
       - host.docker.internal:host-gateway
 

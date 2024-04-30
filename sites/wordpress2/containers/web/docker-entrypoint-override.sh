@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 OLD_GID=$(id -g www-data)
 OLD_UID=$(id -u www-data)
